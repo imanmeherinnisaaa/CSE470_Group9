@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\TournamentConfigurationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tournament extends Model
 {
@@ -27,15 +28,30 @@ class Tournament extends Model
         return $this->belongsTo(User::class, 'organizer_id');
     }
 
+    public function entries(): HasMany
+    {
+        return $this->hasMany(Entry::class);
+    }
+
+    public function rounds(): HasMany
+    {
+        return $this->hasMany(Round::class);
+    }
+
+    public function matches(): HasMany
+    {
+        return $this->hasMany(GameMatch::class);
+    }
+
     public function isElimination(): bool
     {
         return in_array($this->format, ['single_elimination', 'double_elimination'], true);
     }
 
-    /** Settings lock once a bracket exists. For now nothing locks; F4 will update this. */
+    /** Settings lock once a bracket exists. */
     public function isLocked(): bool
     {
-        return false;
+        return $this->matches()->exists();
     }
 
     public function formatLabel(): string
