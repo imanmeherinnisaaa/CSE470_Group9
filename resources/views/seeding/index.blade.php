@@ -5,7 +5,6 @@
     <style>
         body { font-family: Arial; background: #f4f5f7; margin: 35px; }
         .container { max-width: 950px; margin: auto; background: white; padding: 25px; border-radius: 10px; }
-        h1 { color: #243b53; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
         th { background: #edf2f7; }
@@ -20,7 +19,7 @@
 <div class="container">
 
     <h1>F3 - Seeding Engine</h1>
-    <p>Generate tournament seeds using different methods.</p>
+    <p>Generate seeds for confirmed tournament entries.</p>
 
     <p>
         <a href="{{ route('dashboard') }}">Dashboard</a>
@@ -39,75 +38,89 @@
         </div>
     @endif
 
-    <h2>Available demo participants</h2>
+    <h2>Select Tournament</h2>
 
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Rating</th>
-            <th>Team ID</th>
-        </tr>
-
-        @foreach($participants as $participant)
-            <tr>
-                <td>{{ $participant['id'] }}</td>
-                <td>{{ $participant['name'] }}</td>
-                <td>{{ $participant['rating'] }}</td>
-                <td>{{ $participant['team_id'] ?? 'Individual' }}</td>
-            </tr>
-        @endforeach
-    </table>
-
-    <h2>Generate seeds</h2>
-
-    <form method="POST" action="{{ route('seeding.demo.generate') }}">
-        @csrf
-
-        <label>Seeding method:</label>
-        <br>
-
-        <select name="method" required>
-            <option value="rating">Rating-based</option>
-            <option value="random">Random</option>
-            <option value="manual">Manual order</option>
+    <form method="GET" action="{{ route('seeding.demo') }}">
+        <select name="tournament_id" required>
+            <option value="">Choose a tournament</option>
+            @foreach($tournaments as $item)
+                <option value="{{ $item->id }}"
+                    {{ $tournament?->id == $item->id ? 'selected' : '' }}>
+                    {{ $item->name }}
+                </option>
+            @endforeach
         </select>
-
-        <br>
-
-        <label>Manual order (participant IDs separated by commas):</label>
-        <br>
-
-        <input
-            type="text"
-            name="manual_order"
-            placeholder="Example: 3,1,5,2,4"
-            style="width: 300px;"
-        >
-
-        <br>
-
-        <label>
-            <input type="checkbox" name="separate_teammates" value="1">
-            Distribute teammates across the seed order
-        </label>
-
-        <br><br>
-
-        <button type="submit">Generate Seeds</button>
+        <button type="submit">Load Entries</button>
     </form>
 
-    @if($result)
-        <h2>Generated seed order</h2>
+    @if($tournaments->isEmpty())
+        <p>No tournaments created under your account.</p>
+    @endif
 
+    @if($tournament)
+        <h2>Confirmed Participants - {{ $tournament->name }}</h2>
+
+        @if(empty($participants))
+            <p>No confirmed entries are available for seeding.</p>
+        @else
+            <table>
+                <tr>
+                    <th>Entry ID</th>
+                    <th>Participant / Team</th>
+                    <th>Rating Snapshot</th>
+                    <th>Team ID</th>
+                </tr>
+                @foreach($participants as $participant)
+                    <tr>
+                        <td>{{ $participant['id'] }}</td>
+                        <td>{{ $participant['name'] }}</td>
+                        <td>{{ $participant['rating'] }}</td>
+                        <td>{{ $participant['team_id'] ?? 'Individual' }}</td>
+                    </tr>
+                @endforeach
+            </table>
+
+            <h2>Generate Seeds</h2>
+
+            <form method="POST" action="{{ route('seeding.demo.generate') }}">
+                @csrf
+                <input type="hidden" name="tournament_id" value="{{ $tournament->id }}">
+
+                <label>Seeding Method:</label><br>
+                <select name="method" required>
+                    <option value="rating">Rating-based</option>
+                    <option value="random">Random</option>
+                    <option value="manual">Manual Order</option>
+                </select>
+
+                <br>
+
+                <label>Manual order (Entry IDs separated by commas):</label><br>
+                <input type="text" name="manual_order"
+                    placeholder="Example: 5,2,1,4,3" style="width: 300px;">
+
+                <br>
+
+                <label>
+                    <input type="checkbox" name="separate_teammates" value="1">
+                    Distribute teammates across the seed order
+                </label>
+
+                <br><br>
+                <button type="submit">Generate and Save Seeds</button>
+            </form>
+        @endif
+    @endif
+
+    @if($result)
+        <h2>Generated Seed Order</h2>
         <table>
             <tr>
                 <th>Seed</th>
-                <th>Participant</th>
+                <th>Participant / Team</th>
                 <th>Rating</th>
                 <th>Team ID</th>
             </tr>
-
             @foreach($result as $participant)
                 <tr>
                     <td>{{ $participant['seed'] }}</td>

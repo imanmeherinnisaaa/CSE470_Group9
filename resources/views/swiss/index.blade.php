@@ -1,34 +1,32 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>F5 - Swiss Pairing Engine</title>
     <style>
-        body { font-family: Arial; background: #f4f5f7; margin: 35px; }
-        .container { max-width: 950px; margin: auto; background: white; padding: 25px; border-radius: 10px; }
-        h1 { color: #243b53; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        body { font-family: Arial, sans-serif; background: #f4f5f7; margin: 35px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0 25px; }
+        th, td { padding: 11px; border: 1px solid #ddd; text-align: left; }
         th { background: #edf2f7; }
-        button { background: #2563eb; color: white; padding: 10px 18px; border: 0; border-radius: 5px; cursor: pointer; }
-        input { padding: 8px; width: 85px; }
+        button { background: #2563eb; color: white; padding: 10px 16px; border: 0; border-radius: 5px; cursor: pointer; }
+        select { padding: 9px; margin: 8px 0; }
         .message { background: #dcfce7; padding: 12px; margin: 12px 0; }
         .error { color: #b91c1c; }
-        .bye { background: #fef3c7; padding: 12px; margin-top: 15px; }
+        .bye { color: #166534; font-weight: bold; }
         a { margin-right: 15px; }
+        .round { margin-top: 30px; }
     </style>
 </head>
 <body>
 <div class="container">
 
     <h1>F5 - Swiss Pairing Engine</h1>
-    <p>Generate score-based pairings while avoiding previous opponents.</p>
+    <p>Generate score-based rounds, avoid rematches, and track tournament standings.</p>
 
     <p>
         <a href="{{ route('dashboard') }}">Dashboard</a>
-        <a href="{{ route('seeding.demo') }}">Seeding (F3)</a>
+        <a href="{{ route('seeding.demo') }}">F3 Seeding Engine</a>
     </p>
-
-    <p><strong>Current round:</strong> {{ $roundNumber }}</p>
 
     @if(session('status'))
         <div class="message">{{ session('status') }}</div>
@@ -42,99 +40,130 @@
         </div>
     @endif
 
-    <h2>Participants and scores</h2>
+    <h2>Select Swiss Tournament</h2>
 
-    <form method="POST" action="{{ route('swiss.demo.scores') }}">
-        @csrf
-
-        <table>
-            <tr>
-                <th>Participant</th>
-                <th>Score</th>
-                <th>Previous opponents</th>
-                <th>Received bye?</th>
-            </tr>
-
-            @foreach($participants as $participant)
-                <tr>
-                    <td>{{ $participant['name'] }}</td>
-
-                    <td>
-                        <input
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            max="1000"
-                            name="scores[{{ $participant['id'] }}]"
-                            value="{{ $participant['score'] }}"
-                            required
-                        >
-                    </td>
-
-                    <td>
-                        {{ empty($participant['opponents'])
-                            ? 'None'
-                            : implode(', ', $participant['opponents']) }}
-                    </td>
-
-                    <td>
-                        {{ $participant['has_received_bye'] ? 'Yes' : 'No' }}
-                    </td>
-                </tr>
+    <form method="GET" action="{{ route('swiss.demo') }}">
+        <select name="tournament_id" required>
+            <option value="">Choose a tournament</option>
+            @foreach($tournaments as $item)
+                <option value="{{ $item->id }}"
+                    {{ $tournament?->id == $item->id ? 'selected' : '' }}>
+                    {{ $item->name }}
+                </option>
             @endforeach
-        </table>
-
-        <br>
-        <button type="submit">Update Scores</button>
+        </select>
+        <button type="submit">Load Tournament</button>
     </form>
 
-    <hr>
-
-    <form method="POST" action="{{ route('swiss.demo.generate') }}">
-        @csrf
-        <button type="submit">Generate Next Round</button>
-    </form>
-
-    <form method="POST" action="{{ route('swiss.demo.reset') }}" style="margin-top: 12px;">
-        @csrf
-        <button type="submit" style="background: #dc2626;">Reset Demonstration</button>
-    </form>
-
-    @if($result)
-        <h2>Round {{ $result['round_number'] }} Pairings</h2>
-
-        <table>
-            <tr>
-                <th>Match</th>
-                <th>Player 1</th>
-                <th>Player 2</th>
-                <th>Score difference</th>
-                <th>Rematch?</th>
-            </tr>
-
-            @foreach($result['matches'] as $index => $match)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $match['player1']['name'] }}</td>
-                    <td>{{ $match['player2']['name'] }}</td>
-                    <td>{{ $match['score_difference'] }}</td>
-                    <td>{{ $match['rematch'] ? 'Yes' : 'No' }}</td>
-                </tr>
-            @endforeach
-        </table>
-
-        @if($result['bye'])
-            <div class="bye">
-                <strong>Bye recipient:</strong>
-                {{ $result['bye']['name'] }}
-            </div>
-        @endif
+    @if($tournaments->isEmpty())
+        <p>No Swiss-format tournaments were found under your account.</p>
     @endif
 
-    <p style="margin-top: 25px; color: #666;">
-        Demonstration mode: data is stored in your browser session.
-        It is not yet saved to the shared tournament database.
-    </p>
+    @if($tournament)
+        <h2>{{ $tournament->name }}</h2>
+
+        <p>
+            Confirmed entries: {{ $entries->count() }}
+            |
+            Configured rounds: {{ $tournament->swiss_rounds ?? 'Not specified' }}
+        </p>
+
+        <h2>Current Standings</h2>
+
+        @if(empty($standings))
+            <p>No confirmed entries are available.</p>
+        @else
+            <table>
+                <tr>
+                    <th>Rank</th>
+                    <th>Seed</th>
+                    <th>Participant / Team</th>
+                    <th>Points</th>
+                    <th>Bye Received</th>
+                </tr>
+                @foreach($standings as $index => $participant)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $participant['seed'] ?? '-' }}</td>
+                        <td>{{ $participant['name'] }}</td>
+                        <td>{{ $participant['score'] }}</td>
+                        <td>{{ $participant['has_received_bye'] ? 'Yes' : 'No' }}</td>
+                    </tr>
+                @endforeach
+            </table>
+        @endif
+
+        <h2>Generate Next Round</h2>
+
+        <p>Next round: {{ $nextRound }}</p>
+
+        <form method="POST" action="{{ route('swiss.demo.generate') }}">
+            @csrf
+            <input type="hidden" name="tournament_id" value="{{ $tournament->id }}">
+            <button type="submit">Generate and Save Round {{ $nextRound }}</button>
+        </form>
+
+        @if($rounds->isNotEmpty())
+            <form method="POST" action="{{ route('swiss.demo.reset') }}"
+                  onsubmit="return confirm('Reset all Swiss rounds for this tournament?');">
+                @csrf
+                <input type="hidden" name="tournament_id" value="{{ $tournament->id }}">
+                <button type="submit" style="background:#b91c1c; margin-top:10px;">
+                    Reset Swiss Rounds
+                </button>
+            </form>
+        @endif
+
+        @foreach($rounds as $round)
+            <div class="round">
+                <h2>{{ $round->name }}</h2>
+
+                <table>
+                    <tr>
+                        <th>Match</th>
+                        <th>Participant 1</th>
+                        <th>Participant 2</th>
+                        <th>Status</th>
+                        <th>Result</th>
+                    </tr>
+
+                    @foreach($round->matches as $match)
+                        <tr>
+                            <td>{{ $match->match_number }}</td>
+
+                            <td>
+                                {{ $match->entry1?->display_name ?? '-' }}
+                            </td>
+
+                            <td>
+                                @if($match->is_bye)
+                                    <span class="bye">BYE</span>
+                                @else
+                                    {{ $match->entry2?->display_name ?? '-' }}
+                                @endif
+                            </td>
+
+                            <td>{{ ucfirst($match->status) }}</td>
+
+                            <td>
+                                @if($match->is_bye)
+                                    Bye awarded
+                                @elseif($match->status === 'ready')
+                                    <a href="{{ route('matches.result.create', $match) }}">
+                                        Report Result
+                                    </a>
+                                @elseif($match->status === 'completed')
+                                    {{ $match->score1 }} - {{ $match->score2 }}
+                                @else
+                                    {{ ucfirst($match->status) }}
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </table>
+            </div>
+        @endforeach
+    @endif
 
 </div>
 </body>
