@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            // role is owned by F1 (Authoy's migration); this guard keeps the two from clashing.
             if (! Schema::hasColumn('users', 'role')) {
                 $table->string('role', 20)->default('player');
             }
@@ -21,12 +22,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (Schema::hasColumn('users', 'role')) {
-                $table->dropColumn('role');
-            }
             if (Schema::hasColumn('users', 'rating')) {
                 $table->dropColumn('rating');
             }
         });
     }
-};
+}

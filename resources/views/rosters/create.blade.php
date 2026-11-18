@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<x-app-layout>
 <div class="container py-4" style="max-width: 540px;">
     <h1 class="h3 mb-3">Create a team</h1>
 
@@ -21,4 +19,4 @@
         <button class="btn btn-primary">Create team</button>
     </form>
 </div>
-@endsection
+</x-app-layout>

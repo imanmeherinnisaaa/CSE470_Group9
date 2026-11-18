@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<x-app-layout>
 <div class="container py-4">
     <h1 class="h3 mb-1">{{ $tournament->name }}</h1>
     <p class="text-muted mb-4">
@@ -119,4 +117,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-app-layout>

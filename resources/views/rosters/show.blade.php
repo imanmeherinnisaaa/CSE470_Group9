@@ -1,6 +1,5 @@
-@extends('layouts.app')
 
-@section('content')
+<x-app-layout>
 @php($canEdit = $isCaptain && ! $locked)
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -115,4 +114,4 @@
         </div>
     @endif
 </div>
-@endsection
+</x-app-layout>
