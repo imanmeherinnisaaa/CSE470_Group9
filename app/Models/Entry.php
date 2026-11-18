@@ -13,14 +13,15 @@ class Entry extends Model
     public const DISQUALIFIED = 'disqualified';
 
     protected $fillable = [
-        'tournament_id', 'user_id', 'team_id', 'status', 'status_reason',
-        'rating_snapshot', 'entered_at', 'promoted_at', 'withdrawn_at',
+    'tournament_id', 'user_id', 'team_id', 'status', 'status_reason',
+    'rating_snapshot', 'entered_at', 'promoted_at', 'withdrawn_at', 'seed',
     ];
 
     protected $casts = [
-        'entered_at' => 'datetime',
-        'promoted_at' => 'datetime',
-        'withdrawn_at' => 'datetime',
+    'entered_at' => 'datetime',
+    'promoted_at' => 'datetime',
+    'withdrawn_at' => 'datetime',
+    'seed' => 'integer',
     ];
 
     public function tournament(): BelongsTo
