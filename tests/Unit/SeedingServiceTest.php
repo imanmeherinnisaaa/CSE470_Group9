@@ -26,7 +26,21 @@ class SeedingServiceTest extends TestCase
         self::assertSame([1, 2, 3, 4, 5], array_column($result, 'id'));
         self::assertSame([1, 2, 3, 4, 5], array_column($result, 'seed'));
     }
+    public function test_random_seeding_includes_every_participant_once(): void
+   {
+       $participants = $this->participants();
 
+       $result = (new SeedingService())->seedRandomly($participants);
+
+       $resultIds = array_column($result, 'id');
+       $resultSeeds = array_column($result, 'seed');
+
+       sort($resultIds);
+
+        self::assertSame([1, 2, 3, 4, 5], $resultIds);
+        self::assertSame([1, 2, 3, 4, 5], $resultSeeds);
+        self::assertCount(5, $result);
+    }
     public function test_manual_seeding_respects_order(): void
     {
         $result = (new SeedingService())->seedManually(
