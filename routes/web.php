@@ -1,4 +1,3 @@
-
 <?php
 
 use App\Http\Controllers\BracketController;
@@ -7,6 +6,7 @@ use App\Http\Controllers\TournamentController;
 use App\Http\Controllers\SeedingController;
 use App\Http\Controllers\SwissController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ResultController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -20,17 +20,34 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/matches/{gameMatch}/result', [ResultController::class, 'create'])
+        ->name('matches.result.create');
+
+    Route::post('/matches/{gameMatch}/result', [ResultController::class, 'store'])
+        ->name('matches.result.store');
 });
 
 // F1 Tournament Format Configuration + F4 Bracket Generation
 
-// Organizer routes must come before the tournament show route.
 Route::middleware(['auth', 'role:organizer'])->group(function () {
     Route::resource('tournaments', TournamentController::class)
         ->except(['index', 'show']);
 
     Route::post('/tournaments/{tournament}/bracket', [BracketController::class, 'generate'])
         ->name('bracket.generate');
+
+    // F6 Match Scheduling
+    Route::get('/tournaments/{tournament}/schedule', [\App\Http\Controllers\ScheduleController::class, 'index'])
+        ->name('schedule.index');
+
+    Route::post('/tournaments/{tournament}/schedule/assign', [\App\Http\Controllers\ScheduleController::class, 'assign'])
+        ->name('schedule.assign');
+
+    Route::post('/tournaments/{tournament}/schedule/stations', [\App\Http\Controllers\ScheduleController::class, 'storeStation'])
+        ->name('schedule.stations.store');
+
+    Route::post('/tournaments/{tournament}/schedule/time-slots', [\App\Http\Controllers\ScheduleController::class, 'storeTimeSlot'])
+        ->name('schedule.time-slots.store');
 });
 
 Route::middleware('auth')->group(function () {
@@ -105,6 +122,16 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/swiss-demo/reset', [SwissController::class, 'reset'])
         ->name('swiss.demo.reset');
+});
+
+// F6 - Player Availability
+
+Route::middleware('auth')->group(function () {
+    Route::get('/tournaments/{tournament}/availability', [\App\Http\Controllers\AvailabilityController::class, 'index'])
+        ->name('availability.index');
+
+    Route::post('/tournaments/{tournament}/availability', [\App\Http\Controllers\AvailabilityController::class, 'store'])
+        ->name('availability.store');
 });
 
 require __DIR__.'/auth.php';

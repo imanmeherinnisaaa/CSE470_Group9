@@ -31,6 +31,11 @@
             @endif
 
             @if (auth()->id() === $tournament->organizer_id)
+                <a href="{{ route('schedule.index', $tournament) }}"
+                    class="px-4 py-2 bg-blue-600 text-white rounded">
+                    Manage Schedule
+                </a>
+
                 @if ($tournament->isElimination())
                     <form method="POST" action="{{ route('bracket.generate', $tournament) }}">
                         @csrf
