@@ -16,7 +16,13 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-   Route::resource('tournaments', TournamentController::class)->middleware('auth');
+   Route::middleware(['auth', 'role:organizer'])->group(function () {
+    Route::resource('tournaments', TournamentController::class)->except(['index', 'show']);
+});
+
+Route::middleware('auth')->group(function () {
+    Route::resource('tournaments', TournamentController::class)->only(['index', 'show']);
+});
 require __DIR__.'/auth.php';
 
 // ---- F2 Entry, Eligibility and Waitlist
