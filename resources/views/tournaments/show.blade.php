@@ -20,6 +20,7 @@
 
         <div class="flex gap-3">
             <a href="{{ route('tournaments.index') }}" class="px-4 py-2 bg-gray-200 rounded">Back</a>
+            <a href="{{ route('tournaments.entry.show', $tournament) }}" class="px-4 py-2 bg-blue-600 text-white rounded">Entry</a>
             @if (auth()->id() === $tournament->organizer_id)
                 @unless ($tournament->isLocked())
                     <a href="{{ route('tournaments.edit', $tournament) }}" class="px-4 py-2 bg-gray-200 rounded">Edit</a>

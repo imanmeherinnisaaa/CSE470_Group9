@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('tournaments.index')" :active="request()->routeIs('tournaments.*')">
                         Tournaments
                     </x-nav-link>
+                    <x-nav-link :href="route('teams.mine')" :active="request()->routeIs('teams.*')">
+                        My team
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -72,6 +75,12 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('tournaments.index')" :active="request()->routeIs('tournaments.*')">
+                Tournaments
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('teams.mine')" :active="request()->routeIs('teams.*')">
+                My team
             </x-responsive-nav-link>
         </div>
 
