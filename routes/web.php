@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\BracketController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TournamentController;
+use Illuminate\Support\Facades\Route;
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -16,13 +18,20 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-   Route::middleware(['auth', 'role:organizer'])->group(function () {
+
+// ---- F1 Tournament Format Configuration + F4 Bracket Generation (Authoy)
+// The organizer group must come BEFORE the show route, so /tournaments/create
+// is not mistaken for a tournament id.
+Route::middleware(['auth', 'role:organizer'])->group(function () {
     Route::resource('tournaments', TournamentController::class)->except(['index', 'show']);
+    Route::post('/tournaments/{tournament}/bracket', [BracketController::class, 'generate'])->name('bracket.generate');
 });
 
 Route::middleware('auth')->group(function () {
     Route::resource('tournaments', TournamentController::class)->only(['index', 'show']);
+    Route::get('/tournaments/{tournament}/bracket', [BracketController::class, 'show'])->name('bracket.show');
 });
+
 require __DIR__.'/auth.php';
 
 // ---- F2 Entry, Eligibility and Waitlist
@@ -46,4 +55,3 @@ Route::middleware('auth')->group(function () {
     Route::delete('/teams/{team}/roster/{slot}', [\App\Http\Controllers\RosterController::class, 'removePlayer'])->name('teams.roster.remove');
     Route::post('/teams/{team}/roster/substitute', [\App\Http\Controllers\RosterController::class, 'substitute'])->name('teams.roster.substitute');
 });
-
