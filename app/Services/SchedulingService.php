@@ -5,16 +5,13 @@ namespace App\Services;
 use App\Models\Availability;
 use App\Models\Entry;
 use App\Models\GameMatch;
+use App\Models\Station;
 use App\Models\TimeSlot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class SchedulingService
 {
-    /**
-     * Assign a match to a time slot after checking availability
-     * and preventing overlapping bookings.
-     */
     public function assignMatch(GameMatch $match, TimeSlot $timeSlot): GameMatch
     {
         return DB::transaction(function () use ($match, $timeSlot) {
@@ -27,7 +24,9 @@ class SchedulingService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $station = $timeSlot->station;
+            $station = Station::whereKey($timeSlot->station_id)
+                ->lockForUpdate()
+                ->first();
 
             if (!$station || !$station->is_active) {
                 throw ValidationException::withMessages([
@@ -59,10 +58,11 @@ class SchedulingService
             $entries = Entry::whereIn('id', [
                 $match->entry1_id,
                 $match->entry2_id,
-            ])->where('tournament_id', $match->tournament_id)
-              ->where('status', Entry::CONFIRMED)
-              ->with('team')
-              ->get();
+            ])
+                ->where('tournament_id', $match->tournament_id)
+                ->where('status', Entry::CONFIRMED)
+                ->with('team')
+                ->get();
 
             if ($entries->count() !== 2) {
                 throw ValidationException::withMessages([
@@ -87,8 +87,6 @@ class SchedulingService
                 ]);
             }
 
-            // Check that every participating player is available
-            // for the complete time slot.
             $availablePlayerIds = Availability::whereIn('user_id', $playerIds)
                 ->where('tournament_id', $match->tournament_id)
                 ->whereDate('available_date', $timeSlot->slot_date)
@@ -109,8 +107,6 @@ class SchedulingService
                 ]);
             }
 
-            // Check whether the station is already occupied
-            // by another match during an overlapping period.
             $stationOccupied = TimeSlot::where('station_id', $station->id)
                 ->whereDate('slot_date', $timeSlot->slot_date)
                 ->where('start_time', '<', $timeSlot->end_time)
@@ -126,7 +122,6 @@ class SchedulingService
                 ]);
             }
 
-            // Find other matches happening at overlapping times.
             $overlappingMatches = GameMatch::where('id', '<>', $match->id)
                 ->whereNotNull('time_slot_id')
                 ->whereHas('timeSlot', function ($query) use ($timeSlot) {
@@ -154,7 +149,6 @@ class SchedulingService
                 }
             }
 
-            // Assign the time slot to the match.
             $match->update([
                 'time_slot_id' => $timeSlot->id,
             ]);
@@ -167,18 +161,17 @@ class SchedulingService
         });
     }
 
-    /**
-     * Get the participating player IDs for an entry.
-     */
     private function participantIdsForEntry(Entry $entry): array
     {
-        // Individual entry.
         if ($entry->user_id) {
             return [$entry->user_id];
         }
 
-        // Team entry: only starting players are scheduled.
         if ($entry->team_id) {
+            if (!$entry->team) {
+                return [];
+            }
+
             return $entry->team
                 ->starters()
                 ->pluck('player_id')
