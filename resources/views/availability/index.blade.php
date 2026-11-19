@@ -2,7 +2,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Tournament Schedule — {{ $tournament->name }}
+            Submit Availability — {{ $tournament->name }}
         </h2>
     </x-slot>
 
@@ -23,54 +23,15 @@
                 </div>
             @endif
 
-            {{-- Create Station --}}
             <div class="bg-white p-6 shadow-sm sm:rounded-lg">
-                <h3 class="text-lg font-semibold mb-4">Create Station</h3>
+                <h3 class="text-lg font-semibold mb-4">
+                    Submit Your Available Time
+                </h3>
 
                 <form method="POST"
-                      action="{{ route('schedule.stations.store', $tournament) }}"
-                      class="flex flex-col sm:flex-row gap-3">
-                    @csrf
-
-                    <input type="text"
-                           name="name"
-                           placeholder="Enter station name"
-                           class="border-gray-300 rounded-md shadow-sm flex-1"
-                           required>
-
-                    <button type="submit"
-                            style="background:#2563eb;color:white;padding:10px 20px;border-radius:6px;font-weight:bold;">
-                        Add Station
-                    </button>
-                </form>
-            </div>
-
-            {{-- Create Time Slot --}}
-            <div class="bg-white p-6 shadow-sm sm:rounded-lg">
-                <h3 class="text-lg font-semibold mb-4">Create Time Slot</h3>
-
-                <form method="POST"
-                      action="{{ route('schedule.time-slots.store', $tournament) }}"
+                      action="{{ route('availability.store', $tournament) }}"
                       class="space-y-4">
                     @csrf
-
-                    <div>
-                        <label class="block text-sm font-medium mb-1">
-                            Select Station
-                        </label>
-
-                        <select name="station_id"
-                                class="border rounded-md w-full p-2"
-                                required>
-                            <option value="">Choose a station</option>
-
-                            @foreach ($stations as $station)
-                                <option value="{{ $station->id }}">
-                                    {{ $station->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1">
@@ -78,8 +39,9 @@
                         </label>
 
                         <input type="date"
-                               name="slot_date"
+                               name="available_date"
                                min="{{ now()->toDateString() }}"
+                               value="{{ old('available_date') }}"
                                class="border rounded-md w-full p-2"
                                required>
                     </div>
@@ -92,6 +54,7 @@
 
                             <input type="time"
                                    name="start_time"
+                                   value="{{ old('start_time') }}"
                                    class="border rounded-md w-full p-2"
                                    required>
                         </div>
@@ -103,104 +66,40 @@
 
                             <input type="time"
                                    name="end_time"
+                                   value="{{ old('end_time') }}"
                                    class="border rounded-md w-full p-2"
                                    required>
                         </div>
                     </div>
 
                     <button type="submit"
-                            style="background-color:#2563eb !important;color:#ffffff !important;padding:12px 24px;border-radius:6px;font-weight:bold;display:inline-block;visibility:visible;opacity:1;cursor:pointer;">
-                        Add Time Slot
+                            style="background:#2563eb;color:white;padding:12px 24px;border-radius:6px;font-weight:bold;">
+                        Submit Availability
                     </button>
                 </form>
             </div>
 
-            {{-- Matches --}}
-            <div class="bg-white p-6 shadow-sm sm:rounded-lg">
-                <h3 class="text-lg font-semibold mb-4">Matches</h3>
-
-                @forelse ($matches as $match)
-                    <div class="border rounded-lg p-4 mb-4">
-
-                        <p class="font-semibold">
-                            Round {{ $match->round?->number ?? '—' }}
-                            — Match {{ $match->match_number }}
-                        </p>
-
-                        <p class="text-gray-700 mt-1">
-                            {{ $match->entry1?->display_name ?? 'TBD' }}
-                            vs
-                            {{ $match->entry2?->display_name ?? 'TBD' }}
-                        </p>
-
-                        @if ($match->timeSlot)
-                            <p class="text-sm text-green-700 mt-2">
-                                Scheduled:
-                                {{ $match->timeSlot->slot_date }}
-                                ({{ $match->timeSlot->start_time }} -
-                                {{ $match->timeSlot->end_time }})
-                                at {{ $match->timeSlot->station?->name ?? 'Station unavailable' }}
-                            </p>
-                        @else
-                            <p class="text-sm text-orange-600 mt-2">
-                                Not scheduled yet
-                            </p>
-                        @endif
-
-                        <form method="POST"
-                              action="{{ route('schedule.assign', $tournament) }}"
-                              class="flex flex-col sm:flex-row gap-2 mt-3">
-                            @csrf
-
-                            <input type="hidden"
-                                   name="match_id"
-                                   value="{{ $match->id }}">
-
-                            <select name="time_slot_id"
-                                    class="border rounded-md p-2"
-                                    required>
-                                <option value="">Choose a time slot</option>
-
-                                @foreach ($timeSlots as $timeSlot)
-                                    <option value="{{ $timeSlot->id }}"
-                                        @selected($match->time_slot_id == $timeSlot->id)>
-                                        {{ $timeSlot->slot_date }}
-                                        | {{ $timeSlot->start_time }} - {{ $timeSlot->end_time }}
-                                        | {{ $timeSlot->station?->name ?? 'No station' }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            <button type="submit"
-                                    style="background:#2563eb;color:white;padding:10px 20px;border-radius:6px;font-weight:bold;">
-                                Assign
-                            </button>
-                        </form>
-                    </div>
-                @empty
-                    <p>No matches have been generated for this tournament yet.</p>
-                @endforelse
-            </div>
-
-            {{-- Available Time Slots --}}
             <div class="bg-white p-6 shadow-sm sm:rounded-lg">
                 <h3 class="text-lg font-semibold mb-4">
-                    Available Time Slots
+                    Your Submitted Availability
                 </h3>
 
-                @forelse ($timeSlots as $timeSlot)
+                @forelse ($availabilities as $availability)
                     <div class="border-b py-3">
                         <p class="font-medium">
-                            {{ $timeSlot->station?->name ?? 'No station assigned' }}
+                            {{ $availability->available_date }}
                         </p>
 
                         <p class="text-sm text-gray-600">
-                            {{ $timeSlot->slot_date }}
-                            | {{ $timeSlot->start_time }} - {{ $timeSlot->end_time }}
+                            {{ $availability->start_time }}
+                            -
+                            {{ $availability->end_time }}
                         </p>
                     </div>
                 @empty
-                    <p>No time slots have been created for this tournament yet.</p>
+                    <p class="text-gray-600">
+                        You have not submitted any availability yet.
+                    </p>
                 @endforelse
             </div>
 
