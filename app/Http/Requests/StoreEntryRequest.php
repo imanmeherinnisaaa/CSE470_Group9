@@ -8,8 +8,9 @@ class StoreEntryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null
-            && in_array($this->user()->role, ['player', 'team_captain'], true);
+        // Let the EntryService perform the player-role
+        // and tournament-eligibility checks.
+        return $this->user() !== null;
     }
 
     public function rules(): array
