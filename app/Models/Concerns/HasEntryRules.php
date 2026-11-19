@@ -25,6 +25,12 @@ trait HasEntryRules
         return $this->hasMany(Entry::class);
     }
 
+    /** The entrants who hold a place in the tournament. Seeding, brackets and pairings should read this. */
+    public function confirmedEntries(): HasMany
+    {
+        return $this->entries()->where('status', Entry::CONFIRMED);
+    }
+
     public function isTeamBased(): bool
     {
         return $this->entry_type === 'team';
@@ -36,18 +42,34 @@ trait HasEntryRules
         return $this->status === 'registration';
     }
 
+    /**
+     * [opens, closes] for entering. Uses the registration dates set on F1's tournament form,
+     * and falls back to entry_opens_at / entry_closes_at when those are empty.
+     */
+    public function entryWindow(): array
+    {
+        return [
+            $this->registration_opens_at ?? $this->entry_opens_at,
+            $this->registration_closes_at ?? $this->entry_closes_at,
+        ];
+    }
+
     public function isEntryWindowOpen(): bool
     {
         if (! $this->isRegistrationOpen()) {
             return false;
         }
+
+        [$opens, $closes] = $this->entryWindow();
         $now = now();
-        if ($this->entry_opens_at && $now->lt($this->entry_opens_at)) {
+
+        if ($opens && $now->lt($opens)) {
             return false;
         }
-        if ($this->entry_closes_at && $now->gt($this->entry_closes_at)) {
+        if ($closes && $now->gt($closes)) {
             return false;
         }
+
         return true;
     }
 

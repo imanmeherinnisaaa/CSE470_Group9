@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasEntryRules;
 use App\Services\TournamentConfigurationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,10 +10,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tournament extends Model
 {
+    use HasEntryRules;
+
     protected $fillable = [
         'name', 'game', 'format', 'min_participants', 'max_participants', 'swiss_rounds',
         'best_of', 'rules', 'registration_opens_at', 'registration_closes_at',
         'starts_at', 'ends_at', 'status', 'organizer_id', 'bracket_generated_at',
+        'entry_opens_at', 'entry_closes_at', 'min_rating', 'max_rating',
+        'entry_type', 'team_size', 'roster_lock_at',
     ];
 
     protected $casts = [
@@ -21,6 +26,12 @@ class Tournament extends Model
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'bracket_generated_at' => 'datetime',
+        'entry_opens_at' => 'datetime',
+        'entry_closes_at' => 'datetime',
+        'roster_lock_at' => 'datetime',
+        'min_rating' => 'integer',
+        'max_rating' => 'integer',
+        'team_size' => 'integer',
     ];
 
     public function organizer(): BelongsTo

@@ -70,7 +70,7 @@ class RosterController extends Controller
 
     public function destroy(Team $team)
     {
-        $this->authorize('manage', $team);
+        abort_unless(auth()->user()->can('manage', $team), 403);
 
         try {
             $this->rosters->deleteTeam($team);
@@ -91,7 +91,7 @@ class RosterController extends Controller
 
     public function removePlayer(Team $team, RosterSlot $slot)
     {
-        $this->authorize('manage', $team);
+        abort_unless(auth()->user()->can('manage', $team), 403);
         abort_unless((int) $slot->team_id === (int) $team->id, 404);
 
         return $this->attempt(fn () => $this->rosters->removePlayer($team, $slot), 'Player removed from the roster.');

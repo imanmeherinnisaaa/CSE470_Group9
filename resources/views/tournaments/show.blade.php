@@ -11,20 +11,22 @@
         <div class="bg-white shadow rounded p-6 grid grid-cols-2 gap-3 text-sm">
             <div><b>Game:</b> {{ $tournament->game }}</div>
             <div><b>Format:</b> {{ $tournament->formatLabel() }}</div>
-            <div><b>Participants:</b> {{ $tournament->min_participants }} – {{ $tournament->max_participants }}</div>
+            <div><b>Participants:</b> {{ $tournament->min_participants }} - {{ $tournament->max_participants }}</div>
             <div><b>Match type:</b> Best of {{ $tournament->best_of }}</div>
             @if ($tournament->format === 'swiss')
                 <div><b>Swiss rounds:</b> {{ $tournament->swiss_rounds }}</div>
             @endif
             <div><b>Status:</b> {{ $tournament->status }}</div>
-            <div><b>Registration:</b> {{ $tournament->registration_opens_at?->format('d M Y H:i') ?? '—' }} → {{ $tournament->registration_closes_at?->format('d M Y H:i') ?? '—' }}</div>
-            <div><b>Schedule window:</b> {{ $tournament->starts_at?->format('d M Y H:i') ?? '—' }} → {{ $tournament->ends_at?->format('d M Y H:i') ?? '—' }}</div>
+            <div><b>Registration:</b> {{ $tournament->registration_opens_at?->format('d M Y H:i') ?? '-' }} to {{ $tournament->registration_closes_at?->format('d M Y H:i') ?? '-' }}</div>
+            <div><b>Schedule window:</b> {{ $tournament->starts_at?->format('d M Y H:i') ?? '-' }} to {{ $tournament->ends_at?->format('d M Y H:i') ?? '-' }}</div>
             <div class="col-span-2"><b>Estimated matches at full capacity:</b> {{ $estimate }}</div>
-            <div class="col-span-2"><b>Rules:</b><p class="whitespace-pre-line">{{ $tournament->rules ?: '—' }}</p></div>
+            <div class="col-span-2"><b>Rules:</b><p class="whitespace-pre-line">{{ $tournament->rules ?: '-' }}</p></div>
         </div>
 
         <div class="flex flex-wrap gap-3">
             <a href="{{ route('tournaments.index') }}" class="px-4 py-2 bg-gray-200 rounded">Back</a>
+
+            <a href="{{ route('tournaments.entry.show', $tournament) }}" class="px-4 py-2 bg-gray-800 text-white rounded">Entry</a>
 
             @if ($tournament->isElimination())
                 <a href="{{ route('bracket.show', $tournament) }}" class="px-4 py-2 bg-gray-200 rounded">View bracket</a>

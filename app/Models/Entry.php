@@ -14,7 +14,7 @@ class Entry extends Model
 
     protected $fillable = [
         'tournament_id', 'user_id', 'team_id', 'status', 'status_reason',
-        'rating_snapshot', 'entered_at', 'promoted_at', 'withdrawn_at',
+        'rating_snapshot', 'seed', 'entered_at', 'promoted_at', 'withdrawn_at',
     ];
 
     protected $casts = [
