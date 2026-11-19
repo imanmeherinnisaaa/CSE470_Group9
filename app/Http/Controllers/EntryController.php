@@ -50,7 +50,7 @@ class EntryController extends Controller
 
     public function destroy(Entry $entry)
     {
-        $this->authorize('withdraw', $entry);
+        abort_unless(auth()->user()->can('withdraw', $entry), 403);
 
         try {
             $this->entries->withdraw($entry);
